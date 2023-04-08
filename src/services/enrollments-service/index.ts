@@ -1,5 +1,5 @@
 import { request } from "@/utils/request";
-import { notFoundError, cepNotExistsError, requestError } from "@/errors";
+import { notFoundError, cepNotExistsError, cepInvalidError, requestError } from "@/errors";
 import addressRepository, { CreateAddressParams } from "@/repositories/address-repository";
 import enrollmentRepository, { CreateEnrollmentParams } from "@/repositories/enrollment-repository";
 import { exclude } from "@/utils/prisma-utils";
@@ -9,10 +9,13 @@ import {ViaCEPAddress} from "@/protocols"
 async function getAddressFromCEP(cep:string): Promise<ViaCEPAddress> {
   const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
   //const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
+  
+  const cepValid = cepValidation(cep)
+  if(!cepValid) {
+    throw cepInvalidError();
+  }
 
-  //console.log('services antes do if result.data', result.data)
-  if (!result.data) {
-    console.log('services dentro do if result', result)
+  if (!result.data) {    
     throw notFoundError();
   }
 
@@ -76,10 +79,26 @@ export type CreateOrUpdateEnrollmentWithAddress = CreateEnrollmentParams & {
   address: CreateAddressParams;
 };
 
+export function cepValidation(cep: string): boolean
+{
+  const numbers ="0123456789";
+  const cepSanitized = cep.replace("-", "");
+  const arrayCep = cepSanitized.split("");
+  
+  const isLengthEquals8 = arrayCep.length === 8;
+  const isCepZeros = isLengthEquals8 && cepSanitized === "00000000";
+  const  isAllNumeric = arrayCep.map( (e) => numbers.includes(e) ).every( e => e === true);
+  const isCepValid = isLengthEquals8 && isAllNumeric && !isCepZeros;
+
+  return isCepValid;
+}
+
+
 const enrollmentsService = {
   getOneWithAddressByUserId,
   createOrUpdateEnrollmentWithAddress,
-  getAddressFromCEP
+  getAddressFromCEP,
+  cepValidation
 };
 
 export default enrollmentsService;
