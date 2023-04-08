@@ -1,5 +1,5 @@
 import { request } from "@/utils/request";
-import { notFoundError, requestError } from "@/errors";
+import { notFoundError, cepNotExistsError, requestError } from "@/errors";
 import addressRepository, { CreateAddressParams } from "@/repositories/address-repository";
 import enrollmentRepository, { CreateEnrollmentParams } from "@/repositories/enrollment-repository";
 import { exclude } from "@/utils/prisma-utils";
@@ -10,8 +10,14 @@ async function getAddressFromCEP(cep:string): Promise<ViaCEPAddress> {
   const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
   //const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
 
+  //console.log('services antes do if result.data', result.data)
   if (!result.data) {
+    console.log('services dentro do if result', result)
     throw notFoundError();
+  }
+
+  if (result.data.erro) {   
+    throw cepNotExistsError();   
   }
 
   const address = {

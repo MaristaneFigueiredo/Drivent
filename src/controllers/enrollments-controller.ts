@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/middlewares";
 import enrollmentsService from "@/services/enrollments-service";
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import httpStatus from "http-status";
 
 export async function getEnrollmentByUser(req: AuthenticatedRequest, res: Response) {
@@ -28,16 +28,19 @@ export async function postCreateOrUpdateEnrollment(req: AuthenticatedRequest, re
   }
 }
 
-export async function getAddressFromCEP(req: AuthenticatedRequest, res: Response) {
+export async function getAddressFromCEP(req: AuthenticatedRequest, res: Response, next:NextFunction) {
   const { cep } = req.query as Record<string, string>;
 
   try {
     const address = await enrollmentsService.getAddressFromCEP(cep);
+    
+    //console.log('controller address', address)
     res.status(httpStatus.OK).send(address);
   } catch (error) {
-    if (error.name === "NotFoundError") {
+    next(error)
+    /* if (error.name === "NotFoundError") {
       return res.send(httpStatus.NO_CONTENT);
-    }
+    } */
   }
 }
 

@@ -26,7 +26,13 @@ export function handleApplicationErrors(
     });
   }
 
-  if (err.name === "NotFoundError") {
+  if (err.name === "NotFoundError") {    
+    return res.status(httpStatus.NOT_FOUND).send({
+      message: err.message,
+    });
+  }
+
+  if (err.name === "CepNotExistsError") {    
     return res.status(httpStatus.NOT_FOUND).send({
       message: err.message,
     });
