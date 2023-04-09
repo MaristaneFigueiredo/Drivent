@@ -34,6 +34,7 @@ export function handleApplicationErrors(
 
   if (err.name === "CepNotExistsError") {    
     return res.status(httpStatus.NOT_FOUND).send({
+    //  return res.status(httpStatus.NO_CONTENT).send({
       message: err.message,
     });
   }
