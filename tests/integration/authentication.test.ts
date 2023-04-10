@@ -1,13 +1,17 @@
-import app, { init } from "@/app";
 import faker from "@faker-js/faker";
 import httpStatus from "http-status";
 import supertest from "supertest";
 import { createUser } from "../factories";
 import { cleanDb } from "../helpers";
+import app, { init, close } from "@/app";
 
 beforeAll(async () => {
   await init();
   await cleanDb();
+});
+
+afterAll(async () => {
+  await close();
 });
 
 const server = supertest(app);

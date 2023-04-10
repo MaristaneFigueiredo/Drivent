@@ -1,14 +1,18 @@
-import { init } from "@/app";
-import { prisma } from "@/config";
-import userService, { duplicatedEmailError } from "@/services/users-service";
 import faker from "@faker-js/faker";
 import bcrypt from "bcrypt";
 import { createUser as createUserSeed, createEvent as createEventSeed } from "../factories";
 import { cleanDb } from "../helpers";
+import { init, close } from "@/app";
+import { prisma } from "@/config";
+import userService, { duplicatedEmailError } from "@/services/users-service";
 
 beforeAll(async () => {
   await init();
   await cleanDb();
+});
+
+afterAll(async () => {
+  await close();
 });
 
 describe("createUser", () => {

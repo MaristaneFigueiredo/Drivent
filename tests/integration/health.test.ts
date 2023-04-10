@@ -1,6 +1,6 @@
-import app, { init } from "@/app";
 import httpStatus from "http-status";
 import supertest from "supertest";
+import app, { init } from "@/app";
 
 beforeAll(async () => {
   await init();
