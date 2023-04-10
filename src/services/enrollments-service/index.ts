@@ -4,13 +4,16 @@ import addressRepository, { CreateAddressParams } from "@/repositories/address-r
 import enrollmentRepository, { CreateEnrollmentParams } from "@/repositories/enrollment-repository";
 import { exclude } from "@/utils/prisma-utils";
 import { Address, Enrollment } from "@prisma/client";
-import {ViaCEPAddress, CEPReturn} from "@/protocols"
+import { ViaCEPAddress, CEPReturn } from "@/protocols";
+import * as dotenv from "dotenv";
 
-async function getAddressFromCEP(cep:string): Promise<ViaCEPAddress> {
-  //const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
+dotenv.config();
+async function getAddressFromCEP(cep: string): Promise<ViaCEPAddress> {
+  // const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
+ 
   const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
-  
-  const cepValid = cepValidation(cep)
+ 
+  const cepValid = cepValidation(cep);
   if(!cepValid) {
     throw cepInvalidError();
   }
@@ -23,16 +26,16 @@ async function getAddressFromCEP(cep:string): Promise<ViaCEPAddress> {
     throw cepNotExistsError();   
   }  
 
-  let addressResponse = result.data as CEPReturn
+  const addressResponse = result.data as CEPReturn;
   const address = {
-   logradouro: addressResponse.logradouro,
-   complemento: addressResponse.complemento,
-   bairro: addressResponse.bairro, 
-   cidade: addressResponse.localidade,
-   uf: addressResponse.uf,
- };
+    logradouro: addressResponse.logradouro,
+    complemento: addressResponse.complemento,
+    bairro: addressResponse.bairro, 
+    cidade: addressResponse.localidade,
+    uf: addressResponse.uf,
+  };
 
-  return address
+  return address;
 }
 
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
@@ -63,14 +66,15 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
   const enrollment = exclude(params, "address");
   const address = getAddressForUpsert(params.address);
   
-  
   //TODO - Verificar se o CEP é válido  
-  const cepValid = cepValidation(address.cep)
-  if(!cepValid) {
+  
+  const cepValid = cepValidation(address.cep);
+  
+  if(!cepValid) {    
     throw cepInvalidError();
   } 
 
-/*   const cepValid = await getAddressFromCEP(address.cep) as ViaCEPAddress;;
+  /*   const cepValid = await getAddressFromCEP(address.cep) as ViaCEPAddress;;
    console.log(cepValid)
   if (!cepValid) {
     throw cepInvalidError();
@@ -97,18 +101,16 @@ export function cepValidation(cep: string): boolean
   const cepSanitized = cep.replace("-", "");
   const arrayCep = cepSanitized.split("");
   
-  const isLengthEquals8 = arrayCep.length === 8;
-  const isCepZeros = isLengthEquals8 && cepSanitized === "00000000";
+  //const isLengthEquals8 = arrayCep.length === 8; 
+  const isLengthGreaterThan8 = arrayCep.length > 8;
+  //const isCepZeros = isLengthEquals8 && cepSanitized === "00000000";
+  const isCepZeros = cepSanitized === "00000000";
   const  isAllNumeric = arrayCep.map( (e) => numbers.includes(e) ).every( e => e === true);
-/*   const cepTwoZero = cep === "00" */
-  //const isCepValid = isLengthEquals8 && isAllNumeric && !isCepZeros && cepTwoZero ;
-  const isCepValid = isLengthEquals8 && isAllNumeric && !isCepZeros;
-
-  
+  //const isCepValid = isLengthEquals8 && isAllNumeric && !isCepZeros;
+  const isCepValid = isAllNumeric && !isCepZeros && !isLengthGreaterThan8;
 
   return isCepValid;
 }
-
 
 const enrollmentsService = {
   getOneWithAddressByUserId,
